@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Türkiye Coğrafyası - KPSS Odaklı</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+  <style>
+    #map { height: 100vh; width: 100%; }
+    .leaflet-popup-content-wrapper { border-radius: 12px; box-shadow: 0 10px 15px rgba(0,0,0,0.3); }
+  </style>
+</head>
+<body class="bg-gray-950 text-white">
+
+  <div class="flex h-screen overflow-hidden">
+    <!-- Sidebar -->
+    <div class="w-80 bg-gray-900 border-r border-gray-700 flex flex-col">
+      <div class="p-6 border-b border-gray-700">
+        <h1 class="text-2xl font-bold flex items-center gap-3">
+          <i class="fas fa-mountain text-emerald-500"></i>
+          Türkiye Coğrafyası
+        </h1>
+        <p class="text-emerald-400 text-sm mt-1">KPSS Odaklı Eğitim Uygulaması</p>
+      </div>
+
+      <div class="p-6 flex-1 overflow-auto">
+        <h2 class="text-lg font-semibold mb-4 flex items-center gap-2">
+          <i class="fas fa-layer-group"></i> Katmanlar
+        </h2>
+
+        <div class="space-y-4">
+          <label class="flex items-center gap-3 cursor-pointer hover:bg-gray-800 p-3 rounded-xl">
+            <input type="checkbox" id="rivers" checked class="w-5 h-5 accent-blue-500">
+            <span class="text-blue-400 font-medium">🟦 Akarsular (KPSS)</span>
+          </label>
+          
+          <label class="flex items-center gap-3 cursor-pointer hover:bg-gray-800 p-3 rounded-xl">
+            <input type="checkbox" id="plains" checked class="w-5 h-5 accent-amber-500">
+            <span class="text-amber-400 font-medium">🟨 Ovalar (KPSS)</span>
+          </label>
+          
+          <label class="flex items-center gap-3 cursor-pointer hover:bg-gray-800 p-3 rounded-xl">
+            <input type="checkbox" id="plateaus" checked class="w-5 h-5 accent-purple-500">
+            <span class="text-purple-400 font-medium">🟪 Platolar (KPSS)</span>
+          </label>
+        </div>
+
+        <div id="info-panel" class="mt-8 bg-gray-800 rounded-2xl p-5 hidden">
+          <h3 id="feature-title" class="text-xl font-bold text-emerald-400 mb-3"></h3>
+          <p id="feature-desc" class="text-gray-300 leading-relaxed"></p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Harita -->
+    <div id="map" class="flex-1"></div>
+  </div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script>
+    const map = L.map('map').setView([39.0, 35.2], 6);
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(map);
+
+    // Katmanlar
+    const riversLayer = L.layerGroup().addTo(map);
+    const plainsLayer = L.layerGroup().addTo(map);
+    const plateausLayer = L.layerGroup().addTo(map);
+
+    // ==================== KPSS AKARSULAR ====================
+    const rivers = [
+      {name: "Kızılırmak", coords: [[40.8, 33.0], [39.5, 34.5], [38.0, 35.8], [37.0, 36.2]], info: "Türkiye'nin en uzun nehri (1355 km). Karadeniz'e dökülür."},
+      {name: "Fırat Nehri", coords: [[39.8, 38.8], [38.0, 38.0], [37.0, 37.5]], info: "En büyük havzaya sahip. GAP projesiyle önemlidir."},
+      {name: "Dicle Nehri", coords: [[38.6, 40.2], [37.5, 40.8], [36.8, 41.5]], info: "Fırat ile birleşerek Şattülarap'ı oluşturur."},
+      {name: "Yeşilırmak", coords: [[40.5, 36.0], [39.8, 36.5], [39.0, 37.0]], info: "Karadeniz'e dökülen önemli akarsularımızdan."},
+      {name: "Seyhan", coords: [[38.0, 35.2], [37.2, 35.3]], info: "Çukurova'da önemli sulama kaynağı."},
+      {name: "Ceyhan", coords: [[37.5, 36.0], [36.8, 35.8]], info: "Seyhan ile birlikte Çukurova'yı oluşturur."},
+      {name: "Sakarya Nehri", coords: [[40.5, 31.0], [39.8, 31.5]], info: "Marmara Bölgesi'nin en uzun nehri."},
+      {name: "Büyük Menderes", coords: [[38.2, 28.5], [37.8, 27.8]], info: "Ege Bölgesi'nde tektonik ovalar oluşturur."}
+    ];
+
+    rivers.forEach(r => {
+      L.polyline(r.coords, {color: '#3b82f6', weight: 5}).bindPopup(`<b>${r.name}</b><br>${r.info}`).addTo(riversLayer);
+    });
+
+    // ==================== KPSS OVALAR ====================
+    const plains = [
+      {name: "Çukurova", lat: 36.95, lng: 35.35, info: "Türkiye'nin en büyük delta ovası. Seyhan ve Ceyhan nehirleri ile oluşmuştur."},
+      {name: "Konya Ovası", lat: 37.85, lng: 32.48, info: "Türkiye'nin en büyük iç ovası. Tahıl ambarı."},
+      {name: "Bursa Ovası", lat: 40.25, lng: 29.05, info: "Marmara Bölgesi'nde önemli tarım alanı."},
+      {name: "Büyük Menderes Ovası", lat: 37.85, lng: 28.25, info: "Ege Bölgesi tektonik ovası."},
+      {name: "Gediz Ovası", lat: 38.55, lng: 27.85, info: "Ege Bölgesi'nde verimli tarım alanı."},
+      {name: "Harran Ovası", lat: 36.85, lng: 39.25, info: "GAP projesiyle büyük tarım potansiyeli kazandı."},
+      {name: "Bafra Ovası", lat: 41.55, lng: 35.85, info: "Kızılırmak deltasında yer alır."}
+    ];
+
+    plains.forEach(p => {
+      L.circleMarker([p.lat, p.lng], {radius: 13, color: '#fbbf24', fillOpacity: 0.8})
+        .bindPopup(`<b>${p.name}</b><br>${p.info}`).addTo(plainsLayer);
+    });
+
+    // ==================== KPSS PLATOLAR ====================
+    const plateaus = [
+      {name: "Anadolu Platosu", lat: 39.0, lng: 35.0, info: "Türkiye'nin büyük bölümünü kaplar. Ortalama yükseltisi 1000 metredir."},
+      {name: "Erzurum-Kars Platosu", lat: 39.9, lng: 41.3, info: "Volkanik plato. Doğu Anadolu'da yer alır."},
+      {name: "Taşeli Platosu", lat: 36.8, lng: 33.2, info: "Akdeniz Bölgesi - Karstik plato."},
+      {name: "Teke Platosu", lat: 36.7, lng: 29.8, info: "Akdeniz Bölgesi - Karstik özellik gösterir."},
+      {name: "Haymana Platosu", lat: 39.5, lng: 32.8, info: "İç Anadolu - Tabaka düzlüğü."},
+      {name: "Cihanbeyli Platosu", lat: 38.7, lng: 33.0, info: "İç Anadolu'nun önemli platolarından."},
+      {name: "Obruk Platosu", lat: 38.0, lng: 33.5, info: "Karstik özellikler taşır."},
+      {name: "Bozok Platosu", lat: 39.8, lng: 35.5, info: "Yozgat civarı."},
+      {name: "Uzunyayla Platosu", lat: 38.8, lng: 36.8, info: "Sivas civarı."},
+      {name: "Şanlıurfa Platosu", lat: 37.2, lng: 38.8, info: "Güneydoğu Anadolu."}
+    ];
+
+    plateaus.forEach(p => {
+      L.marker([p.lat, p.lng], {
+        icon: L.divIcon({className: 'text-4xl', html: '🟪'})
+      }).bindPopup(`<b>${p.name}</b><br>${p.info}`).addTo(plateausLayer);
+    });
+
+    // Checkbox Kontrolleri
+    document.getElementById('rivers').addEventListener('change', e => 
+      e.target.checked ? map.addLayer(riversLayer) : map.removeLayer(riversLayer)
+    );
+    document.getElementById('plains').addEventListener('change', e => 
+      e.target.checked ? map.addLayer(plainsLayer) : map.removeLayer(plainsLayer)
+    );
+    document.getElementById('plateaus').addEventListener('change', e => 
+      e.target.checked ? map.addLayer(plateausLayer) : map.removeLayer(plateausLayer)
+    );
+
+    console.log("✅ KPSS Coğrafya Uygulaması yüklendi!");
+  </script>
+</body>
+</html>
